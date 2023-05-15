@@ -27,8 +27,8 @@ const client = new MongoClient(uri, {
 
 // =========JWT TOKEN VARIFIED FUNCTION FOR TO GET SOME DATA FROM DATABASE=========
 const varifyJwt = (req, res, next) => {
-  console.log('hello world')
-  console.log(req.headers.authorization)
+  // console.log('hello world')
+  // console.log(req.headers.authorization)
   const authorization = req.headers.authorization;
   if (!authorization) {
     return res.status(401).send({error: true, massage: 'Unauthorized to access token'})
@@ -91,7 +91,7 @@ async function run() {
       if (req.query?.email) {
         query = {email: req.query.email}
       }
-      console.log(query)
+      // console.log(query)
       const cursor = await checkoutCollection.find(query).toArray()
       res.send(cursor)
     })
