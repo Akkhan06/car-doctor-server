@@ -25,6 +25,24 @@ const client = new MongoClient(uri, {
   },
 });
 
+// =========JWT TOKEN VARIFIED FUNCTION FOR TO GET SOME DATA FROM DATABASE=========
+const varifyJwt = (req, res, next) => {
+  console.log('hello world')
+  console.log(req.headers.authorization)
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({error: true, massage: 'Unauthorized to access token'})
+  }
+  const token = authorization.split(' ')[1]
+
+  jwt.verify(token, process.env.JWT_SIC, (error, decoded) => {
+    if(error){
+      return res.status(403).send({error: true, massage: 'Unauthorized to access token'})
+    }
+    req.decoded = decoded
+    next()
+  })
+}
 
 
 async function run() {
@@ -49,9 +67,26 @@ async function run() {
       const result = await cursor.toArray()
       res.send(result)
     })
-// =====GET SOME USER FROM CHECKOUT=======
-    app.get('/checkout_user', async(req, res) => {
-      console.log(req.query.email)
+
+
+     // =========JWT API=========
+   app.post('/jwt', (req, res) => {
+    const user = req.body;
+    console.log(user)
+    const token = jwt.sign(user, process.env.JWT_SIC, {expiresIn: '1h'})
+    res.send({token})
+   })
+    
+
+// =====GET SOME USER FROM CHECKOUT BY EMAIL=======
+    app.get('/checkout_user', varifyJwt, async(req, res) => {
+      // console.log(req.headers.authorization)
+      const decoded = req.decoded;
+
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({err: true, massage: 'forbidden'})
+      }
+      
       let query = {}
       if (req.query?.email) {
         query = {email: req.query.email}
@@ -110,12 +145,6 @@ async function run() {
     })
 
 
-  // =========JWT API=========
-   app.post('/jwt', (req, res) => {
-    const doc = req.body;
-    
-   })
-    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
